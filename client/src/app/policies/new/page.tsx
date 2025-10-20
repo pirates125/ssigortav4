@@ -67,9 +67,10 @@ export default function NewPolicyPage() {
   const { data: quote, isLoading: quoteLoading } = useQuote(
     quoteId ? parseInt(quoteId) : 0
   );
-  const { data: scrapedQuotes, isLoading: scrapedLoading } = useScrapedQuotes(
+  const { data: scrapedQuotesData, isLoading: scrapedLoading } = useScrapedQuotes(
     quoteId ? parseInt(quoteId) : 0
   );
+  const scrapedQuotes = scrapedQuotesData?.data || [];
   const createPolicyMutation = useCreatePolicy();
 
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
