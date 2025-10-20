@@ -1,0 +1,180 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: eesigorta-postgres
+    environment:
+      POSTGRES_DB: eesigorta
+      POSTGRES_USER: ees_user
+      POSTGRES_PASSWORD: ees_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/migrations
+    networks:
+      - eesigorta-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ees_user -d eesigorta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Job Queue
+  redis:
+    image: redis:7-alpine
+    container_name: eesigorta-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eesigorta-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: eesigorta-api
+    environment:
+      APP_ENV: production
+      APP_PORT: 8080
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: eesigorta
+      POSTGRES_USER: ees_user
+      POSTGRES_PASSWORD: ees_pass
+      POSTGRES_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_ACCESS_TTL_MIN: 15
+      JWT_REFRESH_TTL_H: 168
+      TOTP_ISSUER: EESigorta
+      SCRAPER_RESPECT_ROBOTS: "true"
+      SCRAPER_DEFAULT_DELAY_MS: 1250
+      SCRAPER_MAX_RETRY: 5
+      HEADLESS_ENABLED: "true"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET: eesigorta
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - eesigorta-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: eesigorta-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - eesigorta-network
+    restart: unless-stopped
+
+  # MinIO Object Storage (Optional)
+  minio:
+    image: minio/minio:RELEASE.2023-12-20T10-07-38Z
+    container_name: eesigorta-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - eesigorta-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Asynqmon - Job Queue Monitor
+  asynqmon:
+    image: hibiken/asynqmon:v0.8.0
+    container_name: eesigorta-asynqmon
+    environment:
+      ASYNQ_MON_REDIS_ADDR: redis:6379
+    ports:
+      - "8081:8080"
+    depends_on:
+      - redis
+    networks:
+      - eesigorta-network
+    restart: unless-stopped
+
+  # Prometheus (Optional)
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: eesigorta-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deployments/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+    networks:
+      - eesigorta-network
+    restart: unless-stopped
+
+  # Grafana (Optional)
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: eesigorta-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployments/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - eesigorta-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  eesigorta-network:
+    driver: bridge
