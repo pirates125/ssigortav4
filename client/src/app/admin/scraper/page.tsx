@@ -188,146 +188,162 @@ export default function ScraperAdminPage() {
 
       <div className="flex-1 ml-64 min-h-screen">
         <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Scraper Yönetimi</h1>
-          <p className="text-gray-600 mt-1">
-            Sigorta şirketlerinden otomatik fiyat çekme ayarları
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Tümünü Çalıştır
-          </Button>
-          <Button onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Yeni Hedef
-          </Button>
-        </div>
-      </div>
-
-      {/* Scraper Targets */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Sigorta Şirketleri</CardTitle>
-          <CardDescription>Scraper hedefleri ve durumları</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {targets.map((target) => (
-              <Card
-                key={target.id}
-                className={`${
-                  target.is_active ? "border-ees-blue" : "border-gray-300"
-                }`}
-              >
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <span className="text-xs font-semibold text-ees-blue">
-                          {target.name.substring(0, 2)}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-sm">{target.name}</h3>
-                        <p className="text-xs text-gray-500">
-                          {target.use_headless ? "Headless" : "Colly"}
-                        </p>
-                      </div>
-                    </div>
-                    {target.is_active ? (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Başarı Oranı:</span>
-                      <span className="font-semibold text-green-600">
-                        %{target.success_rate}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Son Çalışma:</span>
-                      <span className="text-gray-700">{target.last_run}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleRunScraper(target.id)}
-                      disabled={!target.is_active}
-                    >
-                      <PlayCircle className="h-3 w-3 mr-1" />
-                      Çalıştır
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleToggleActive(target.id)}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Scraper Yönetimi
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Sigorta şirketlerinden otomatik fiyat çekme ayarları
+              </p>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Tümünü Çalıştır
+              </Button>
+              <Button onClick={() => setShowForm(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Yeni Hedef
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Recent Scraper Runs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Son Scraper Çalışmaları</CardTitle>
-          <CardDescription>Detaylı çalışma logları</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium">Hedef</th>
-                  <th className="text-left py-3 px-4 font-medium">Durum</th>
-                  <th className="text-left py-3 px-4 font-medium">
-                    Toplam Teklif
-                  </th>
-                  <th className="text-left py-3 px-4 font-medium">Başarılı</th>
-                  <th className="text-left py-3 px-4 font-medium">Başarısız</th>
-                  <th className="text-left py-3 px-4 font-medium">Süre</th>
-                  <th className="text-left py-3 px-4 font-medium">Başlangıç</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scraperRuns.map((run) => (
-                  <tr key={run.id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium">{run.target_name}</td>
-                    <td className="py-3 px-4">{getStatusBadge(run.status)}</td>
-                    <td className="py-3 px-4">{run.total_quotes}</td>
-                    <td className="py-3 px-4 text-green-600">
-                      {run.successful_quotes}
-                    </td>
-                    <td className="py-3 px-4 text-red-600">
-                      {run.failed_quotes}
-                    </td>
-                    <td className="py-3 px-4">{run.duration}</td>
-                    <td className="py-3 px-4 text-sm text-gray-600">
-                      {run.started_at}
-                    </td>
-                  </tr>
+          {/* Scraper Targets */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Sigorta Şirketleri</CardTitle>
+              <CardDescription>Scraper hedefleri ve durumları</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {targets.map((target) => (
+                  <Card
+                    key={target.id}
+                    className={`${
+                      target.is_active ? "border-ees-blue" : "border-gray-300"
+                    }`}
+                  >
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <span className="text-xs font-semibold text-ees-blue">
+                              {target.name.substring(0, 2)}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-sm">
+                              {target.name}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {target.use_headless ? "Headless" : "Colly"}
+                            </p>
+                          </div>
+                        </div>
+                        {target.is_active ? (
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-500" />
+                        )}
+                      </div>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Başarı Oranı:</span>
+                          <span className="font-semibold text-green-600">
+                            %{target.success_rate}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Son Çalışma:</span>
+                          <span className="text-gray-700">
+                            {target.last_run}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleRunScraper(target.id)}
+                          disabled={!target.is_active}
+                        >
+                          <PlayCircle className="h-3 w-3 mr-1" />
+                          Çalıştır
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleToggleActive(target.id)}
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Scraper Runs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Son Scraper Çalışmaları</CardTitle>
+              <CardDescription>Detaylı çalışma logları</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium">Hedef</th>
+                      <th className="text-left py-3 px-4 font-medium">Durum</th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        Toplam Teklif
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        Başarılı
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        Başarısız
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">Süre</th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        Başlangıç
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scraperRuns.map((run) => (
+                      <tr key={run.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">
+                          {run.target_name}
+                        </td>
+                        <td className="py-3 px-4">
+                          {getStatusBadge(run.status)}
+                        </td>
+                        <td className="py-3 px-4">{run.total_quotes}</td>
+                        <td className="py-3 px-4 text-green-600">
+                          {run.successful_quotes}
+                        </td>
+                        <td className="py-3 px-4 text-red-600">
+                          {run.failed_quotes}
+                        </td>
+                        <td className="py-3 px-4">{run.duration}</td>
+                        <td className="py-3 px-4 text-sm text-gray-600">
+                          {run.started_at}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

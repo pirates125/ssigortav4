@@ -142,10 +142,11 @@ export default function CustomersPage() {
                 setShowForm(true);
                 setEditingCustomer(null);
               }}
-              className="sm:w-auto"
+              className="w-full sm:w-auto"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Yeni Müşteri
+              <span className="hidden sm:inline">Yeni Müşteri</span>
+              <span className="sm:hidden">Yeni</span>
             </Button>
           </div>
 
@@ -188,16 +189,16 @@ export default function CustomersPage() {
                           <th className="text-left py-3 px-4 font-medium">
                             İsim
                           </th>
-                          <th className="text-left py-3 px-4 font-medium">
+                          <th className="text-left py-3 px-4 font-medium hidden md:table-cell">
                             E-posta
                           </th>
-                          <th className="text-left py-3 px-4 font-medium">
+                          <th className="text-left py-3 px-4 font-medium hidden lg:table-cell">
                             Telefon
                           </th>
-                          <th className="text-left py-3 px-4 font-medium">
+                          <th className="text-left py-3 px-4 font-medium hidden lg:table-cell">
                             Şehir
                           </th>
-                          <th className="text-left py-3 px-4 font-medium">
+                          <th className="text-left py-3 px-4 font-medium hidden sm:table-cell">
                             Kayıt Tarihi
                           </th>
                           <th className="text-left py-3 px-4 font-medium">
@@ -215,26 +216,27 @@ export default function CustomersPage() {
                             <td className="py-3 px-4 font-medium">
                               {customer.name}
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 hidden md:table-cell">
                               {customer.email || "-"}
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 hidden lg:table-cell">
                               {customer.phone
                                 ? formatPhoneNumber(customer.phone)
                                 : "-"}
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 hidden lg:table-cell">
                               {customer.city || "-"}
                             </td>
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 hidden sm:table-cell">
                               {formatDate(customer.created_at)}
                             </td>
                             <td className="py-3 px-4">
-                              <div className="flex gap-2">
+                              <div className="flex gap-1">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleEdit(customer)}
+                                  className="h-8 w-8"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -243,6 +245,7 @@ export default function CustomersPage() {
                                   size="icon"
                                   onClick={() => handleDelete(customer.id)}
                                   disabled={deleteMutation.isPending}
+                                  className="h-8 w-8"
                                 >
                                   <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
@@ -266,7 +269,7 @@ export default function CustomersPage() {
 
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2">
                       <div className="text-sm text-gray-500">
                         Sayfa {page} / {totalPages}
                       </div>

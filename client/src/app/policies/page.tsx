@@ -244,7 +244,10 @@ export default function PoliciesPage() {
                     <Download className="mr-2 h-4 w-4" />
                     <span className="hidden sm:inline">Dışa Aktar</span>
                   </Button>
-                  <Button onClick={() => router.push("/policies/new")} className="w-full sm:w-auto">
+                  <Button
+                    onClick={() => router.push("/policies/new")}
+                    className="w-full sm:w-auto"
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     <span className="hidden sm:inline">Yeni Poliçe</span>
                   </Button>
@@ -269,63 +272,67 @@ export default function PoliciesPage() {
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Poliçe No</TableHead>
-                      <TableHead>Müşteri</TableHead>
-                      <TableHead>Şirket</TableHead>
-                      <TableHead>Prim</TableHead>
-                      <TableHead>Durum</TableHead>
-                      <TableHead>Başlangıç</TableHead>
-                      <TableHead>Bitiş</TableHead>
-                      <TableHead className="text-right">İşlemler</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPolicies.map((policy: any) => (
-                      <TableRow key={policy.id}>
-                        <TableCell className="font-medium">
-                          {policy.policy_number}
-                        </TableCell>
-                        <TableCell>{policy.customer?.name || "N/A"}</TableCell>
-                        <TableCell>{policy.company_name}</TableCell>
-                        <TableCell>{formatCurrency(policy.premium)}</TableCell>
-                        <TableCell>{getStatusBadge(policy.status)}</TableCell>
-                        <TableCell>{formatDate(policy.start_date)}</TableCell>
-                        <TableCell>{formatDate(policy.end_date)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                router.push(`/policies/${policy.id}`)
-                              }
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                router.push(`/policies/${policy.id}/edit`)
-                              }
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeletePolicy(policy.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Poliçe No</TableHead>
+                        <TableHead>Müşteri</TableHead>
+                        <TableHead>Şirket</TableHead>
+                        <TableHead>Prim</TableHead>
+                        <TableHead>Durum</TableHead>
+                        <TableHead>Başlangıç</TableHead>
+                        <TableHead>Bitiş</TableHead>
+                        <TableHead className="text-right">İşlemler</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPolicies.map((policy: any) => (
+                        <TableRow key={policy.id}>
+                          <TableCell className="font-medium">
+                            {policy.policy_number}
+                          </TableCell>
+                          <TableCell>
+                            {policy.customer?.name || "N/A"}
+                          </TableCell>
+                          <TableCell>{policy.company_name}</TableCell>
+                          <TableCell>
+                            {formatCurrency(policy.premium)}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(policy.status)}</TableCell>
+                          <TableCell>{formatDate(policy.start_date)}</TableCell>
+                          <TableCell>{formatDate(policy.end_date)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  router.push(`/policies/${policy.id}`)
+                                }
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  router.push(`/policies/${policy.id}/edit`)
+                                }
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePolicy(policy.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
                   </Table>
                 </div>
               )}
