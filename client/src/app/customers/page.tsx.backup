@@ -1,0 +1,543 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { Sidebar } from "@/components/ui/sidebar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
+  useCustomers,
+  useCreateCustomer,
+  useUpdateCustomer,
+  useDeleteCustomer,
+  useMe,
+  useLogout,
+} from "@/hooks/useApi";
+import {
+  formatDate,
+  formatPhoneNumber,
+  validateTCKN,
+  validateVKN,
+} from "@/lib/utils";
+import { toast } from "react-hot-toast";
+
+const customerSchema = z.object({
+  tc_vkn: z.string().min(1, "TC/VKN gerekli"),
+  name: z.string().min(1, "İsim gerekli"),
+  email: z
+    .string()
+    .email("Geçerli e-posta giriniz")
+    .optional()
+    .or(z.literal("")),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  district: z.string().optional(),
+  postal_code: z.string().optional(),
+  gender: z.string().optional(),
+});
+
+type CustomerFormData = z.infer<typeof customerSchema>;
+
+export default function CustomersPage() {
+  const router = useRouter();
+  const logoutMutation = useLogout();
+
+  // ---- Auth Gate (SSR-safe) ----
+  const [authReady, setAuthReady] = useState(false);
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // only on client
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+    if (!token) {
+      setIsAuthed(false);
+      router.push("/login");
+    } else {
+      setIsAuthed(true);
+    }
+    setAuthReady(true);
+  }, [router]);
+
+  const handleLogout = async () => {
+    await logoutMutation.mutateAsync();
+    router.push("/login");
+  };
+
+  // ---- Hooks & State ----
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+
+  const { data: me } = useMe(); // me.data?.email / me.data?.role
+
+  const {
+    data: customersData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useCustomers({
+    query: searchQuery,
+    page,
+    pageSize: 20,
+  });
+
+  const createMutation = useCreateCustomer();
+  const updateMutation = useUpdateCustomer();
+  const deleteMutation = useDeleteCustomer();
+
+  const form = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      tc_vkn: "",
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      district: "",
+      postal_code: "",
+      gender: "",
+    },
+  });
+
+  const onSubmit = async (data: CustomerFormData) => {
+    try {
+      // TC/VKN doğrulama
+      if (data.tc_vkn.length === 11) {
+        if (!validateTCKN(data.tc_vkn)) {
+          toast.error("Geçersiz TC Kimlik Numarası");
+          return;
+        }
+      } else if (data.tc_vkn.length === 10) {
+        if (!validateVKN(data.tc_vkn)) {
+          toast.error("Geçersiz Vergi Kimlik Numarası");
+          return;
+        }
+      } else {
+        toast.error("TC/VKN 10 veya 11 haneli olmalıdır");
+        return;
+      }
+
+      if (editingCustomer) {
+        await updateMutation.mutateAsync({
+          id: editingCustomer.id,
+          customer: data,
+        });
+        setEditingCustomer(null);
+        toast.success("Müşteri güncellendi");
+      } else {
+        await createMutation.mutateAsync(data);
+        toast.success("Müşteri oluşturuldu");
+      }
+
+      setShowForm(false);
+      form.reset();
+      refetch();
+    } catch (err: any) {
+      // mutation kendisi handle ediyorsa sessiz kal
+    }
+  };
+
+  const handleEdit = (customer: any) => {
+    setEditingCustomer(customer);
+    form.reset({
+      tc_vkn: customer.tc_vkn,
+      name: customer.name,
+      email: customer.email || "",
+      phone: customer.phone || "",
+      address: customer.address || "",
+      city: customer.city || "",
+      district: customer.district || "",
+      postal_code: customer.postal_code || "",
+      gender: customer.gender || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Bu müşteriyi silmek istediğinizden emin misiniz?")) {
+      await deleteMutation.mutateAsync(id);
+      toast.success("Müşteri silindi");
+      refetch();
+    }
+  };
+
+  // ---- Normalize data SHAPE once ----
+  // Beklenen shape: { data: Customer[], total: number, total_pages: number }
+  const customers = customersData?.data?.data ?? [];
+  const total = customersData?.data?.total ?? 0;
+  const totalPages = customersData?.data?.total_pages ?? 0;
+
+  // ---- Render Gates ----
+  if (!authReady) {
+    return <div className="p-6">Yükleniyor...</div>;
+  }
+  if (isAuthed === false) {
+    return <div className="p-6">Girişe yönlendiriliyorsunuz…</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      <Sidebar
+        onLogout={handleLogout}
+        user={{ email: me?.data?.email || "", role: me?.data?.role || "" }}
+      />
+
+      <div className="flex-1 ml-64 min-h-screen">
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Müşteriler</h1>
+            <p className="text-gray-600">Müşteri bilgilerini yönetin</p>
+          </div>
+
+          {/* Search & Add */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Müşteri ara..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10"
+              />
+            </div>
+            <Button
+              onClick={() => {
+                setShowForm(true);
+                setEditingCustomer(null);
+                form.reset();
+              }}
+              className="sm:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Yeni Müşteri
+            </Button>
+          </div>
+
+          {/* States */}
+          {isError && (
+            <Card className="mb-6">
+              <CardContent className="py-4">
+                <p className="text-red-600">
+                  Veri alınırken hata oluştu. {(error as any)?.message || ""}
+                </p>
+                <div className="mt-2">
+                  <Button variant="outline" onClick={() => refetch()}>
+                    Tekrar dene
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Customer Form Modal */}
+          {showForm && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <CardHeader>
+                  <CardTitle>
+                    {editingCustomer ? "Müşteri Düzenle" : "Yeni Müşteri"}
+                  </CardTitle>
+                  <CardDescription>Müşteri bilgilerini giriniz</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tc_vkn">TC/VKN *</Label>
+                        <Input
+                          id="tc_vkn"
+                          placeholder="12345678901"
+                          {...form.register("tc_vkn")}
+                        />
+                        {form.formState.errors.tc_vkn && (
+                          <p className="text-sm text-red-500">
+                            {form.formState.errors.tc_vkn.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="name">İsim Soyisim *</Label>
+                        <Input
+                          id="name"
+                          placeholder="Ahmet Yılmaz"
+                          {...form.register("name")}
+                        />
+                        {form.formState.errors.name && (
+                          <p className="text-sm text-red-500">
+                            {form.formState.errors.name.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="email">E-posta</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="ornek@email.com"
+                          {...form.register("email")}
+                        />
+                        {form.formState.errors.email && (
+                          <p className="text-sm text-red-500">
+                            {form.formState.errors.email.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Telefon</Label>
+                        <Input
+                          id="phone"
+                          placeholder="0555 123 45 67"
+                          {...form.register("phone")}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="city">Şehir</Label>
+                        <Input
+                          id="city"
+                          placeholder="İstanbul"
+                          {...form.register("city")}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="district">İlçe</Label>
+                        <Input
+                          id="district"
+                          placeholder="Kadıköy"
+                          {...form.register("district")}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="postal_code">Posta Kodu</Label>
+                        <Input
+                          id="postal_code"
+                          placeholder="34710"
+                          {...form.register("postal_code")}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="gender">Cinsiyet</Label>
+                        <select
+                          id="gender"
+                          {...form.register("gender")}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">Seçiniz</option>
+                          <option value="male">Erkek</option>
+                          <option value="female">Kadın</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Adres</Label>
+                      <textarea
+                        id="address"
+                        rows={3}
+                        placeholder="Tam adres bilgisi"
+                        {...form.register("address")}
+                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowForm(false);
+                          setEditingCustomer(null);
+                          form.reset();
+                        }}
+                      >
+                        İptal
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          createMutation.isPending || updateMutation.isPending
+                        }
+                      >
+                        {editingCustomer ? "Güncelle" : "Kaydet"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Customers Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Müşteri Listesi</CardTitle>
+              <CardDescription>Toplam {total} müşteri</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2" />
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-medium">
+                            TC/VKN
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium">
+                            İsim
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium">
+                            E-posta
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium">
+                            Telefon
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium">
+                            Şehir
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium">
+                            Kayıt Tarihi
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium">
+                            İşlemler
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customers.map((customer: any) => (
+                          <tr
+                            key={customer.id}
+                            className="border-b hover:bg-gray-50"
+                          >
+                            <td className="py-3 px-4">{customer.tc_vkn}</td>
+                            <td className="py-3 px-4 font-medium">
+                              {customer.name}
+                            </td>
+                            <td className="py-3 px-4">
+                              {customer.email || "-"}
+                            </td>
+                            <td className="py-3 px-4">
+                              {customer.phone
+                                ? formatPhoneNumber(customer.phone)
+                                : "-"}
+                            </td>
+                            <td className="py-3 px-4">
+                              {customer.city || "-"}
+                            </td>
+                            <td className="py-3 px-4">
+                              {formatDate(customer.created_at)}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(customer)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(customer.id)}
+                                  disabled={deleteMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {customers.length === 0 && (
+                          <tr>
+                            <td
+                              className="py-6 text-center text-sm text-gray-500"
+                              colSpan={7}
+                            >
+                              Kayıt bulunamadı.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="text-sm text-gray-500">
+                        Sayfa {page} / {totalPages}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setPage((p) => Math.min(totalPages, p + 1))
+                          }
+                          disabled={page === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
