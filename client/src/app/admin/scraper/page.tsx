@@ -181,12 +181,14 @@ export default function ScraperAdminPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar
-        onLogout={handleLogout}
-        user={{ email: me?.data?.email || "", role: me?.data?.role || "" }}
-      />
+      <div className="hidden md:flex">
+        <Sidebar
+          onLogout={handleLogout}
+          user={{ email: me?.data?.email || "", role: me?.data?.role || "" }}
+        />
+      </div>
 
-      <div className="flex-1 ml-64 min-h-screen">
+      <div className="flex-1 min-h-screen ml-0 md:ml-64">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>

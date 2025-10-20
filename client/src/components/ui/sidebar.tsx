@@ -95,13 +95,13 @@ export function Sidebar({ className, onLogout, user, ...props }: SidebarProps) {
 
   return (
     <div
-      className={cn("flex h-screen fixed left-0 top-0 z-50", className)}
+      className={cn("flex min-h-screen fixed left-0 top-0 z-50", className)}
       {...props}
     >
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          "hidden md:flex flex-col bg-card border-r border-border transition-all duration-300 h-full",
+          "hidden md:flex flex-col bg-card border-r border-border transition-all duration-300 h-screen",
           isCollapsed ? "w-16" : "w-64"
         )}
       >

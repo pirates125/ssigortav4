@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/ui/sidebar";
 import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -19,6 +26,16 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Menu,
+  Building2,
+  Users,
+  FileText,
+  Shield,
+  TrendingUp,
+  Settings,
+  RefreshCw,
+  LogOut,
+  BarChart3,
 } from "lucide-react";
 import {
   useCustomers,
@@ -33,6 +50,7 @@ import { toast } from "react-hot-toast";
 
 export default function CustomersPage() {
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const logoutMutation = useLogout();
 
   // ---- Auth Gate (SSR-safe) ----
@@ -111,15 +129,110 @@ export default function CustomersPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar
-        onLogout={handleLogout}
-        user={{ email: me?.data?.email || "", role: me?.data?.role || "" }}
-      />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar
+          onLogout={handleLogout}
+          user={{ email: me?.data?.email || "", role: me?.data?.role || "" }}
+        />
+      </div>
 
-      <div className="flex-1 ml-64 min-h-screen">
+      {/* Mobile Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          <SheetDescription className="sr-only">
+            Main navigation menu for EESigorta Portal
+          </SheetDescription>
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    EESigorta
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Portal</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex-1 p-2 overflow-y-auto">
+              <nav className="space-y-1">
+                {[
+                  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+                  { name: "Müşteriler", href: "/customers", icon: Users },
+                  { name: "Teklifler", href: "/quotes", icon: FileText },
+                  { name: "Poliçeler", href: "/policies", icon: Shield },
+                  { name: "Şubeler", href: "/branches", icon: Building2 },
+                  { name: "Acenteler", href: "/agents", icon: Users },
+                  { name: "Raporlar", href: "/reports", icon: TrendingUp },
+                  { name: "Scraper", href: "/admin/scraper", icon: RefreshCw },
+                  { name: "Ayarlar", href: "/settings", icon: Settings },
+                ].map((item) => (
+                  <Button
+                    key={item.href}
+                    variant="ghost"
+                    className="w-full justify-start gap-3 h-12 px-3"
+                    onClick={() => {
+                      router.push(item.href);
+                      setSidebarOpen(false);
+                    }}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.name}</span>
+                  </Button>
+                ))}
+              </nav>
+            </div>
+
+            {/* User Info & Logout */}
+            <div className="p-4 border-t border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium">
+                    {me?.data?.email?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {me?.data?.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {me?.data?.role}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 h-10 px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Çıkış Yap</span>
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex-1 min-h-screen ml-0 md:ml-64">
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Müşteriler</h1>
+            <div className="flex items-center gap-4 mb-2">
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+              </Sheet>
+              <h1 className="text-2xl font-bold text-gray-900">Müşteriler</h1>
+            </div>
             <p className="text-gray-600">Müşteri bilgilerini yönetin</p>
           </div>
 
