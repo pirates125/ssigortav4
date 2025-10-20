@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Sidebar } from "@/components/ui/sidebar";
 import {
   Card,
   CardContent,
@@ -20,9 +22,38 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { useMe, useLogout } from "@/hooks/useApi";
 import { toast } from "react-hot-toast";
 
 export default function ScraperAdminPage() {
+  const router = useRouter();
+  const logoutMutation = useLogout();
+
+  // ---- Auth Gate ----
+  const [authReady, setAuthReady] = useState(false);
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+    if (!token) {
+      setIsAuthed(false);
+      router.push("/login");
+    } else {
+      setIsAuthed(true);
+    }
+    setAuthReady(true);
+  }, [router]);
+
+  const handleLogout = async () => {
+    await logoutMutation.mutateAsync();
+    router.push("/login");
+  };
+
+  // ---- Hooks & State ----
+  const { data: me } = useMe();
   const [showForm, setShowForm] = useState(false);
   const [editingTarget, setEditingTarget] = useState<any>(null);
 
@@ -140,8 +171,23 @@ export default function ScraperAdminPage() {
     );
   };
 
+  // ---- Render Gates ----
+  if (!authReady) {
+    return <div className="p-6">Yükleniyor...</div>;
+  }
+  if (isAuthed === false) {
+    return <div className="p-6">Girişe yönlendiriliyorsunuz…</div>;
+  }
+
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-background flex">
+      <Sidebar
+        onLogout={handleLogout}
+        user={{ email: me?.data?.email || "", role: me?.data?.role || "" }}
+      />
+
+      <div className="flex-1 ml-64 min-h-screen">
+        <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Scraper Yönetimi</h1>
@@ -282,6 +328,8 @@ export default function ScraperAdminPage() {
           </div>
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 }

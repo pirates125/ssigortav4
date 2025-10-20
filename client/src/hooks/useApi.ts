@@ -464,7 +464,8 @@ export const useScrapedQuotes = (quoteId: number) => {
               id: 1,
               quote_id: quoteId,
               company_name: "Anadolu Sigorta",
-              company_logo: "https://placehold.co/100x100/0066CC/FFFFFF?text=AS",
+              company_logo:
+                "https://placehold.co/100x100/0066CC/FFFFFF?text=AS",
               premium: 1500,
               coverage_amount: 50000,
               discount: 150,
@@ -476,7 +477,8 @@ export const useScrapedQuotes = (quoteId: number) => {
               id: 2,
               quote_id: quoteId,
               company_name: "Allianz",
-              company_logo: "https://placehold.co/100x100/FF6600/FFFFFF?text=AL",
+              company_logo:
+                "https://placehold.co/100x100/FF6600/FFFFFF?text=AL",
               premium: 1400,
               coverage_amount: 50000,
               discount: 140,
@@ -488,7 +490,8 @@ export const useScrapedQuotes = (quoteId: number) => {
               id: 3,
               quote_id: quoteId,
               company_name: "Aksigorta",
-              company_logo: "https://placehold.co/100x100/00AA00/FFFFFF?text=AK",
+              company_logo:
+                "https://placehold.co/100x100/00AA00/FFFFFF?text=AK",
               premium: 1450,
               coverage_amount: 50000,
               discount: 145,
@@ -500,7 +503,8 @@ export const useScrapedQuotes = (quoteId: number) => {
               id: 4,
               quote_id: quoteId,
               company_name: "Mapfre",
-              company_logo: "https://placehold.co/100x100/CC0000/FFFFFF?text=MF",
+              company_logo:
+                "https://placehold.co/100x100/CC0000/FFFFFF?text=MF",
               premium: 1600,
               coverage_amount: 50000,
               discount: 160,
@@ -512,7 +516,8 @@ export const useScrapedQuotes = (quoteId: number) => {
               id: 5,
               quote_id: quoteId,
               company_name: "Axa Sigorta",
-              company_logo: "https://placehold.co/100x100/9900CC/FFFFFF?text=AX",
+              company_logo:
+                "https://placehold.co/100x100/9900CC/FFFFFF?text=AX",
               premium: 1550,
               coverage_amount: 50000,
               discount: 155,

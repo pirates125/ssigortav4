@@ -196,7 +196,7 @@ export default function QuoteComparisonPage() {
           {/* Price Comparison Table */}
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
                 <div>
                   <CardTitle>Fiyat Karşılaştırması</CardTitle>
                   <CardDescription>
@@ -207,7 +207,7 @@ export default function QuoteComparisonPage() {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
                     <Download className="mr-2 h-4 w-4" />
-                    Excel İndir
+                    <span className="hidden sm:inline">Excel İndir</span>
                   </Button>
                 </div>
               </div>
@@ -218,7 +218,8 @@ export default function QuoteComparisonPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2" />
                 </div>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[50px]">#</TableHead>
@@ -354,7 +355,8 @@ export default function QuoteComparisonPage() {
                       );
                     })}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               )}
 
               {scrapedQuotes.length === 0 && !scrapedLoading && (

@@ -216,7 +216,7 @@ export default function PoliciesPage() {
           {/* Filters and Actions */}
           <Card className="mb-6">
             <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
                 <div className="flex flex-col sm:flex-row gap-4 flex-1">
                   <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -230,7 +230,7 @@ export default function PoliciesPage() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[150px]"
                   >
                     <option value="all">Tüm Durumlar</option>
                     <option value="active">Aktif</option>
@@ -239,14 +239,14 @@ export default function PoliciesPage() {
                     <option value="pending">Beklemede</option>
                   </select>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="outline" className="w-full sm:w-auto">
                     <Download className="mr-2 h-4 w-4" />
-                    Dışa Aktar
+                    <span className="hidden sm:inline">Dışa Aktar</span>
                   </Button>
-                  <Button onClick={() => router.push("/policies/new")}>
+                  <Button onClick={() => router.push("/policies/new")} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
-                    Yeni Poliçe
+                    <span className="hidden sm:inline">Yeni Poliçe</span>
                   </Button>
                 </div>
               </div>
@@ -267,7 +267,8 @@ export default function PoliciesPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2" />
                 </div>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Poliçe No</TableHead>
@@ -325,7 +326,8 @@ export default function PoliciesPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               )}
 
               {filteredPolicies.length === 0 && !isLoading && (
